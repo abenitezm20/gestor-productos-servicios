@@ -27,7 +27,7 @@ def token_required(func):
             raise TokenNotFound
 
         #email = None
-        deportista: DeportistaToken = None
+        deportista: SocioToken = None
         token = token_bearer.split(' ')[1]
         logger.info(f'URL {URL_VALIDAR_TOKEN}')
 

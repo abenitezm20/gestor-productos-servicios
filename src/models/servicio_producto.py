@@ -1,6 +1,6 @@
 from marshmallow import Schema, fields
 from .db import Base
-from sqlalchemy import UUID, Column, ForeignKey, Float, Boolean, String, Integer, DateTime, BigInteger
+from sqlalchemy import UUID, Column, ForeignKey, String, Integer, DateTime, BigInteger
 from sqlalchemy.orm import Mapped, relationship
 from src.models.model import Model
 from src.models.socio_negocio import SocioNegocio

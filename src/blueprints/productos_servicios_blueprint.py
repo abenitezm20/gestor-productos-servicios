@@ -29,7 +29,6 @@ def agregar_productos_servicios(usuario_token: SocioToken):
         'fecha_entrega_prestacion': body.get('fecha_entrega_prestacion', None),
         'valor': body.get('valor', None)
     }
-
     result = AgregarProductosServicios(usuario_token, info).execute()
     return make_response(jsonify(result), 200)
 
