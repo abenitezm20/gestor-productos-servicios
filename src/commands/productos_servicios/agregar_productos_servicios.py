@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class AgregarProductosServicios(BaseCommand):
     def __init__(self, usuario_token: SocioToken, info: dict):
         logger.info(
-            'Agregar perfil alimenticio a usuario deportista')
+            'Agregar productos a usuario deportista')
 
         self.usuario_token: SocioToken = usuario_token
         self.info = info
