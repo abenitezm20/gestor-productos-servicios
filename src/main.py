@@ -5,6 +5,7 @@ from flask_cors import CORS
 
 from src.errors.errors import ApiError
 from src.blueprints.health_blueprint import health_blueprint
+from src.blueprints.productos_servicios_blueprint import productos_servicios_blueprint
 from src.models.db import init_db
 
 # Configuración logging
@@ -26,7 +27,7 @@ init_db()
 # Registro de blueprints
 PREFIJO = '/gestor-productos-servicios/'
 app.register_blueprint(health_blueprint, url_prefix=PREFIJO+'health')
-
+app.register_blueprint(productos_servicios_blueprint, url_prefix=PREFIJO+'productos-servicios')
 
 @app.errorhandler(ApiError)
 def handle_exception(err):
