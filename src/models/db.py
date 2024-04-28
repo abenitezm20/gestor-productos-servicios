@@ -24,6 +24,8 @@ def init_db():
     # they will be registered properly on the metadata.  Otherwise
     # you will have to import them first before calling init_db()
 
-    # from .deporte import Deporte
+    from .servicio_producto import ServicioProducto
+    from .socio_negocio import SocioNegocio
+    from .subtipo_servicio_producto import SubtipoServicioProducto
     Base.metadata.create_all(bind=engine)
 

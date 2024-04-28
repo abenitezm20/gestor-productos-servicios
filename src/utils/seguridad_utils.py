@@ -43,10 +43,9 @@ def token_required(func):
                     raise Unauthorized
 
                 logger.info('Token valido')
-                deportista = DeportistaToken(
+                deportista = SocioToken(
                     email=data['email'],
-                    subscripcion=data['subscripcion'],
-                    tipo_usuario=data['tipo_usuario'],
+                    tipo_usuario=data['tipo_usuario']
                 )
                 #email = data['email']
             else:
@@ -85,8 +84,7 @@ def get_token(email: str, tipo_usuario: str = None, subscripcion: str = None):
         logger.error(f'Error obteniendo token con el autorizador {e}')
         raise ApiError
 
-class DeportistaToken():
-    def __init__(self, email: str, subscripcion: str, tipo_usuario: str):
+class SocioToken():
+    def __init__(self, email: str, tipo_usuario: str):
         self.email = email
-        self.subscripcion = subscripcion
         self.tipo_usuario = tipo_usuario
