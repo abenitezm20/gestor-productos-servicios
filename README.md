@@ -77,4 +77,4 @@ Para correr las pruebas unitarias es necesario tener configuradas las variables 
 2. `pipenv install --dev`
 3. `pytest --cov-fail-under=80 --cov=src --cov-report=html`
 
-Una vez se ejecute el ultimo comando, se corren todas las pruebas unitarias y se elabora el reporte de cobertura que puede visualizar en un navegador  abriendo el archivo ./htmlcov/index.html
+Una vez se ejecute el ultimo comando, se corren todas las pruebas unitarias y se elabora el reporte de cobertura que puede visualizar en un navegador  abriendo el archivo ./htmlcov/index.html 
