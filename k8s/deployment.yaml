@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sport-app-gestor-productos-servicios-deploy
+  labels:
+    app: sport-app-gestor-productos-servicios-deploy
+  namespace: eks-sport-app
+  annotations:
+    monitoring: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sport-app-gestor-productos-servicios-deploy
+  template:
+    metadata:
+      labels:
+        app: sport-app-gestor-productos-servicios-deploy
+    spec:
+      containers:
+        - name: sport-app-gestor-productos-servicios-deploy
+          image: DOCKER_IMAGE
+          ports:
+            - containerPort: 3001
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /registro-usuarios/health/ping
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 60
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: pfsecrets
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: pfsecrets
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: pfsecrets
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pfsecrets
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pfsecrets
+                  key: DB_PASSWORD
+            - name: URL_AUTORIZADOR
+              valueFrom:
+                secretKeyRef:
+                  name: pfsecrets
+                  key: URL_AUTORIZADOR

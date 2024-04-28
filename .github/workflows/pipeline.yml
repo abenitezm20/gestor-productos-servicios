@@ -1,0 +1,99 @@
+name: Test coverage
+on:
+  push:
+    branches:
+      - main
+env:
+  ECR_REPOSITORY: sport-app-gestor-productos-servicios
+  EKS_CLUSTER_NAME: pf-cluster
+  AWS_REGION: us-east-1
+jobs:
+  test_servicio:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    strategy:
+      matrix:
+        python-version: [3.10]
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASS }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
+        ports:
+          - 5432:5432
+        options: --name=postgres-container
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install pipenv
+        run: pip install pipenv
+      - name: Install dependencies
+        run: pipenv install --dev
+      - name: Run unit test
+        env:
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+        run: |
+          pipenv run pytest --cov=src --cov-fail-under=80
+
+  create_release:
+    needs: test_servicio
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    if: contains(github.event.head_commit.message, '#deploy')
+    outputs:
+      tag_name: ${{steps.generate_release_tag.outputs.next_release_tag}}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2
+      - name: Generate release tag
+        id: generate_release_tag
+        uses: amitsingh-007/next-release-tag@v5.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_prefix: "v"
+          tag_template: "yyyy.mm.dd.i"
+      - name: Create Release
+        id: release_tag
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.generate_release_tag.outputs.next_release_tag }}
+          generateReleaseNotes: true
+          makeLatest: true
+
+  deploy_release:
+    runs-on: ubuntu-latest
+    needs: create_release
+    steps:
+      - uses: actions/checkout@v2
+      - name: Print tag name
+        env:
+          TAG_NAME: ${{ needs.create_release.outputs.tag_name }}
+        run: echo "${{env.TAG_NAME}}"
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws-region: ${{env.AWS_REGION}}
+      - name: login to aws ecr
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: build, tag, push to aws ecr
+        env:
+          ECR_REGISTRY: ${{steps.login-ecr.outputs.registry}}
+          IMAGE_TAG: ${{needs.create_release.outputs.tag_name}}
+        run: |
+          docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+      - name: update eks config
+        run: aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+      - name: deploy to eks
+        env:
+          ECR_REGISTRY: ${{steps.login-ecr.outputs.registry}}
+          IMAGE_TAG: ${{needs.create_release.outputs.tag_name}}
+        run: |
+          sed -i.bak "s|DOCKER_IMAGE|$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/deployment.yaml && \
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: sport-app-db
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_DB: sport_app_db
+      POSTGRES_USER: laad
+      POSTGRES_PASSWORD: laad
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

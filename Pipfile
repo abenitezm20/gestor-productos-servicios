@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "gestor-productos-servicios"
+
+[packages]
+flask = "*"
+python-dotenv = "*"
+sqlalchemy = "*"
+marshmallow = "*"
+psycopg2 = "*"
+requests = "*"
+gunicorn = "*"
+PyJWT = "*"
+flask-cors = "*"
+
+[dev-packages]
+faker = "*"
+pytest = "*"
+pytest-cov = "*"
+pytest-mock = "*"
+pytest-env = "*"
+
+[requires]
+python_version = "3.10"
