@@ -21,12 +21,12 @@ spec:
         - name: sport-app-gestor-productos-servicios-deploy
           image: DOCKER_IMAGE
           ports:
-            - containerPort: 3001
+            - containerPort: 3006
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
-              path: /registro-usuarios/health/ping
-              port: 3001
+              path: /gestor-productos-servicios/health/ping
+              port: 3006
             initialDelaySeconds: 30
             periodSeconds: 60
           resources:
