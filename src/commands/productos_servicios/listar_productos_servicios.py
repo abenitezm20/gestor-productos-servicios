@@ -3,6 +3,7 @@ import logging
 from src.commands.base_command import BaseCommand
 from src.errors.errors import BadRequest
 from src.models.db import db_session
+from src.models.fotos import Fotos
 from src.models.servicio_producto import ServicioProducto, ServicioProductoSchema
 from src.models.deporte import Deporte
 from src.models.socio_negocio import SocioNegocio
@@ -59,8 +60,22 @@ class ListarProductosServicios (BaseCommand):
                         'tipo_servicio_producto': subtipo_servicio_producto.tipo,
                         'lugar_entrega_prestacion': servicio.lugar_entrega_prestacion,
                         'pais': servicio.pais,
-                        'valor': servicio.valor
+                        'valor': servicio.valor,
+                        'fotos': []
                     }
+
+                    fotos = Fotos.query.filter(Fotos.id_servicio_producto == servicio.id).all()
+                    if fotos is not None:
+                        print("Si hay fotos para: " + str(servicio.id_subtipo_servicio_producto) + " las fotos son: " + str(fotos))
+                        for recfoto in fotos:
+                            print("orden de la foto: ", str(recfoto.orden))
+                            responseServicio['fotos'].append({
+                                'orden': recfoto.orden,
+                                'foto': recfoto.foto
+                            })
+                    else:
+                        print("No hay fotos")
+            
                     response.append(responseServicio)
             
                 return response

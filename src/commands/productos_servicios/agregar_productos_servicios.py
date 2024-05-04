@@ -5,6 +5,7 @@ from src.commands.base_command import BaseCommand
 from src.errors.errors import BadRequest
 from src.models.db import db_session
 from src.models.deporte import Deporte
+from src.models.fotos import Fotos
 from src.models.servicio_producto import ServicioProducto
 from src.models.socio_negocio import SocioNegocio
 from src.models.subtipo_servicio_producto import SubtipoServicioProducto
@@ -76,7 +77,22 @@ class AgregarProductosServicios(BaseCommand):
                 session.commit()
 
                 #se consulta el id del servicio o producto creado
-                servicio_producto = ServicioProducto.query.filter(ServicioProducto.id_socio_negocio == socio_negocio.id).first()
+                servicio_producto = ServicioProducto.query.filter(ServicioProducto.id_socio_negocio == socio_negocio.id,
+                                                                  ServicioProducto.descripcion == self.info.get('descripcion')).first()
+
+                if servicio_producto is None:
+                    logger.error("Servicio o Producto No Existe")
+                    raise BadRequest
+                else:
+                    #se almacenan las fotos del servicio o producto
+                    if self.info.get('fotos') is not None:
+                        for fotos in self.info.get('fotos'):
+                            rec_foto = Fotos(id_servicio_producto=servicio_producto.id, 
+                                            foto= fotos.get('foto'),
+                                            orden=fotos.get('orden'))
+                            session.add(rec_foto)
+                            session.commit()
+
                 response = {
                     'message': 'success',
                     'id_servicio_producto': servicio_producto.id
