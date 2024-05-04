@@ -4,7 +4,9 @@ from src.commands.base_command import BaseCommand
 from src.errors.errors import BadRequest
 from src.models.db import db_session
 from src.models.servicio_producto import ServicioProducto, ServicioProductoSchema
+from src.models.deporte import Deporte
 from src.models.socio_negocio import SocioNegocio
+from src.models.subtipo_servicio_producto import SubtipoServicioProducto
 from src.utils.seguridad_utils import SocioToken
 from src.utils.str_utils import str_none_or_empty
 
@@ -40,6 +42,25 @@ class ListarProductosServicios (BaseCommand):
             else:
                 response = []
                 for servicio in servicios:
-                    schema = ServicioProductoSchema()
-                    response.append(schema.dump(servicio)) 
+
+                    deporte: Deporte = Deporte.query.filter_by(id=servicio.id_deporte).first()
+
+                    subtipo_servicio_producto: SubtipoServicioProducto = SubtipoServicioProducto.query.filter_by(id=servicio.id_subtipo_servicio_producto).first()
+
+                    responseServicio = {
+                        'cantidad_disponible': servicio.cantidad_disponible,
+                        'ciudad': servicio.ciudad,
+                        'descripcion': servicio.descripcion,
+                        'fecha_entrega_prestacion': servicio.fecha_entrega_prestacion,
+                        'id': servicio.id,
+                        'deporte': deporte.nombre,
+                        'id_socio_negocio': servicio.id_socio_negocio,
+                        'subtipo_servicio_producto': subtipo_servicio_producto.nombre,
+                        'tipo_servicio_producto': subtipo_servicio_producto.tipo,
+                        'lugar_entrega_prestacion': servicio.lugar_entrega_prestacion,
+                        'pais': servicio.pais,
+                        'valor': servicio.valor
+                    }
+                    response.append(responseServicio)
+            
                 return response
