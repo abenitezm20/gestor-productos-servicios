@@ -26,35 +26,36 @@ class AgregarsesionPersonalizada(BaseCommand):
             raise BadRequest
 
     def execute(self):
-        socio_negocio: SocioNegocio = SocioNegocio.query.filter_by(email=self.usuario_token.email).first()
-    
-        if socio_negocio is None:
-            logger.error("Socio de Negocio No Existe")
-            raise BadRequest
-        else:
-            logger.info(f"Agregando Sesiones Personalizadas: {socio_negocio.email}")
+        with db_session() as session:
+            socio_negocio: SocioNegocio = SocioNegocio.query.filter_by(email=self.usuario_token.email).first()
+        
+            if socio_negocio is None:
+                logger.error("Socio de Negocio No Existe")
+                raise BadRequest
+            else:
+                logger.info(f"Agregando Sesiones Personalizadas: {socio_negocio.email}")
 
-            #Primero se almacena la informacion de la sesion personalizada
-            rec_sesion_personalizada = SesionPersonalizada(nombre=self.info.get('nombre_sesion'), 
-                                                            id_servicio_producto=self.info.get('id_servicio_producto'))
-            db_session.add(rec_sesion_personalizada)
-            db_session.commit()
+                #Primero se almacena la informacion de la sesion personalizada
+                rec_sesion_personalizada = SesionPersonalizada(nombre=self.info.get('nombre_sesion'), 
+                                                                id_servicio_producto=self.info.get('id_servicio_producto'))
+                session.add(rec_sesion_personalizada)
+                session.commit()
 
-            #se consulta el id de la sesion personalizada
-            sesion_personalizada = SesionPersonalizada.query.filter(SesionPersonalizada.nombre == self.info.get('nombre_sesion')).first()
+                #se consulta el id de la sesion personalizada
+                sesion_personalizada = SesionPersonalizada.query.filter(SesionPersonalizada.nombre == self.info.get('nombre_sesion')).first()
 
-            #Se almacenan los ejercicios de la sesion personalizada
-            for ejercicio in self.info.get('ejercicios'):
-                rec_ejercicio = EjerciciosSesionPersonalizada(nombre=ejercicio.get('nombre'), 
-                                                              id_sesion_personalizada=sesion_personalizada.id, 
-                                                              descripcion=ejercicio.get('descripcion'), 
-                                                              cantidad_repeticiones=ejercicio.get('cantidad_repeticiones'), 
-                                                              duracion=ejercicio.get('duracion'))
-                db_session.add(rec_ejercicio)
-                db_session.commit()
-            
-            response = {
-                'message': 'success'
-            }
+                #Se almacenan los ejercicios de la sesion personalizada
+                for ejercicio in self.info.get('ejercicios'):
+                    rec_ejercicio = EjerciciosSesionPersonalizada(nombre=ejercicio.get('nombre'), 
+                                                                id_sesion_personalizada=sesion_personalizada.id, 
+                                                                descripcion=ejercicio.get('descripcion'), 
+                                                                cantidad_repeticiones=ejercicio.get('cantidad_repeticiones'), 
+                                                                duracion=ejercicio.get('duracion'))
+                    session.add(rec_ejercicio)
+                    session.commit()
+                
+                response = {
+                    'message': 'success'
+                }
 
-        return response
+            return response

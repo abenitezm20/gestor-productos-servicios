@@ -29,5 +29,6 @@ def init_db():
     from .subtipo_servicio_producto import SubtipoServicioProducto
     from .sesion_personalizada import SesionPersonalizada
     from .ejercicios_sesion_personalizada import EjerciciosSesionPersonalizada
+    from .fotos import Fotos
     Base.metadata.create_all(bind=engine)
 
