@@ -2,7 +2,7 @@ import logging
 from flask import Blueprint, jsonify, make_response, request
 from src.utils.seguridad_utils import SocioToken, token_required
 from src.commands.productos_servicios.agregar_productos_servicios import AgregarProductosServicios
-from src.commands.productos_servicios.listar_productos_servicios import ListarProductosServicios, ListarProductosServiciosFiltro
+from src.commands.productos_servicios.listar_productos_servicios import ListarProductosServicios, ListarProductosServiciosFiltro, ListarProductosServiciosID
 from src.commands.productos_servicios.agregar_sesion_personalizada import AgregarsesionPersonalizada
 from src.commands.productos_servicios.listar_sesion_personalizada import ListarSesionPersonalizada
 
@@ -56,6 +56,21 @@ def listar_productos_servicios_filtro(usuario_token: SocioToken, accion: str):
         }
         result = ListarProductosServiciosFiltro(usuario_token, info).execute()
     return make_response(jsonify(result), 200)
+
+
+#Esta accion se utiliza para entregar los detalles por un id indicado
+@productos_servicios_blueprint.route('/listarID/<id>', methods=['GET'])
+@token_required
+def listar_productos_servicios_por_id(usuario_token: SocioToken, id: str):
+    logger.info(f'Listar productos de {usuario_token.email}')
+    if id is not None:
+        info = {
+            'email': usuario_token.email,
+            'id': id,
+        }
+        result = ListarProductosServiciosID(usuario_token, info).execute()
+    return make_response(jsonify(result), 200)
+
 
 
 @productos_servicios_blueprint.route('/agregar-sesion-personalizada', methods=['POST'])
