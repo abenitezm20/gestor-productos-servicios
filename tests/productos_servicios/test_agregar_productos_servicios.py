@@ -158,6 +158,15 @@ class TestProductosServicios():
                 socio_email = socio_random.email
                 socio_id= socio_random.id
 
+                info_deporte = {
+                    'nombre': fake.name(),
+                }
+                deporte_random = Deporte(**info_deporte)
+                session.add(deporte_random)
+                session.commit()
+                deporte_id = deporte_random.id
+
+
                 mock_response = MagicMock()
                 mock_response.status_code = 200
                 mock_response.json.return_value = {
@@ -172,7 +181,7 @@ class TestProductosServicios():
 
                 servicio_producto = {
                     "email": socio_random.email,
-                    "deporte": 'Atletismo',
+                    "deporte": deporte_random.nombre,
                     "tipo": fake.random_element(elements=('producto', 'servicio')),
                     "descripcion": fake.text(),
                     "subtipo": fake.word(),
@@ -218,6 +227,10 @@ class TestProductosServicios():
 
                     delServicioProducto = delete(ServicioProducto).where(ServicioProducto.id_socio_negocio == socio_id)
                     session.execute(delServicioProducto)
+                    session.commit()
+
+                    delDeporte = delete(Deporte).where(Deporte.id == deporte_id)
+                    session.execute(delDeporte)
                     session.commit()
 
                     delSocioNegocio = delete(SocioNegocio).where(SocioNegocio.id == socio_id)
