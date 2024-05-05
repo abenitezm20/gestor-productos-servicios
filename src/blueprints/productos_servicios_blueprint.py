@@ -76,16 +76,15 @@ def agregar_sesion_personalizada(usuario_token: SocioToken):
     return make_response(jsonify(result), 200)
 
 
-@productos_servicios_blueprint.route('/listar-sesion-personalizada', methods=['GET'])
+@productos_servicios_blueprint.route('/listar-sesion-personalizada/<id>', methods=['GET'])
 @token_required
-def listar_sesion_personalizada(usuario_token: SocioToken):
+def listar_sesion_personalizada(usuario_token: SocioToken, id: str):
     logger.info(f'Listar ejercicios de sesion personalizada {usuario_token.email}')
-    body = request.get_json()
 
-    info = {
-        'email': usuario_token.email,
-        'id_servicio_producto' : body.get('id_servicio_producto', None),
-    }
-
-    result = ListarSesionPersonalizada(usuario_token, info).execute()
+    if id is not None:
+        info = {
+            'email': usuario_token.email,
+            'id_servicio_producto' : id
+        }
+        result = ListarSesionPersonalizada(usuario_token, info).execute()
     return make_response(jsonify(result), 200)

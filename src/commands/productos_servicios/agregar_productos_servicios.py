@@ -40,6 +40,7 @@ class AgregarProductosServicios(BaseCommand):
                 id_subtipo_servicio_producto = None
 
                 #Primero se almacena la informacion del producto o servicio
+                print ("La info es: " + str(self.info))
                 subtipo_servicio_producto = SubtipoServicioProducto.query.filter_by(
                     nombre=self.info.get('subtipo'),
                     tipo=self.info.get('tipo')
