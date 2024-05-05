@@ -2,7 +2,7 @@ import logging
 from flask import Blueprint, jsonify, make_response, request
 from src.utils.seguridad_utils import SocioToken, token_required
 from src.commands.productos_servicios.agregar_productos_servicios import AgregarProductosServicios
-from src.commands.productos_servicios.listar_productos_servicios import ListarProductosServicios
+from src.commands.productos_servicios.listar_productos_servicios import ListarProductosServicios, ListarProductosServiciosFiltro
 from src.commands.productos_servicios.agregar_sesion_personalizada import AgregarsesionPersonalizada
 from src.commands.productos_servicios.listar_sesion_personalizada import ListarSesionPersonalizada
 
@@ -38,13 +38,23 @@ def agregar_productos_servicios(usuario_token: SocioToken):
 @token_required
 def listar_productos_servicios(usuario_token: SocioToken):
     logger.info(f'Listar productos de {usuario_token.email}')
-    #body = request.get_json()
-
     info = {
         'email': usuario_token.email,
     }
-
     result = ListarProductosServicios(usuario_token, info).execute()
+    return make_response(jsonify(result), 200)
+
+#Esta accion se utiliza como filtrar, ya sea por producto, servicio o deporte.
+@productos_servicios_blueprint.route('/listar/<accion>', methods=['GET'])
+@token_required
+def listar_productos_servicios_filtro(usuario_token: SocioToken, accion: str):
+    logger.info(f'Listar productos de {usuario_token.email}')
+    if accion is not None:
+        info = {
+            'email': usuario_token.email,
+            'accion': accion,
+        }
+        result = ListarProductosServiciosFiltro(usuario_token, info).execute()
     return make_response(jsonify(result), 200)
 
 
