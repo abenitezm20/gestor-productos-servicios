@@ -2,7 +2,7 @@ import logging
 from flask import Blueprint, jsonify, make_response, request
 from src.utils.seguridad_utils import SocioToken, token_required
 from src.commands.productos_servicios.agregar_productos_servicios import AgregarProductosServicios
-from src.commands.productos_servicios.listar_productos_servicios import ListarProductosServicios, ListarProductosServiciosFiltro
+from src.commands.productos_servicios.listar_productos_servicios import ListarProductosServicios, ListarProductosServiciosFiltro, ListarProductosServiciosID
 from src.commands.productos_servicios.agregar_sesion_personalizada import AgregarsesionPersonalizada
 from src.commands.productos_servicios.listar_sesion_personalizada import ListarSesionPersonalizada
 
@@ -58,6 +58,21 @@ def listar_productos_servicios_filtro(usuario_token: SocioToken, accion: str):
     return make_response(jsonify(result), 200)
 
 
+#Esta accion se utiliza para entregar los detalles por un id indicado
+@productos_servicios_blueprint.route('/listarID/<id>', methods=['GET'])
+@token_required
+def listar_productos_servicios_por_id(usuario_token: SocioToken, id: str):
+    logger.info(f'Listar productos de {usuario_token.email}')
+    if id is not None:
+        info = {
+            'email': usuario_token.email,
+            'id': id,
+        }
+        result = ListarProductosServiciosID(usuario_token, info).execute()
+    return make_response(jsonify(result), 200)
+
+
+
 @productos_servicios_blueprint.route('/agregar-sesion-personalizada', methods=['POST'])
 @token_required
 def agregar_sesion_personalizada(usuario_token: SocioToken):
@@ -76,16 +91,15 @@ def agregar_sesion_personalizada(usuario_token: SocioToken):
     return make_response(jsonify(result), 200)
 
 
-@productos_servicios_blueprint.route('/listar-sesion-personalizada', methods=['GET'])
+@productos_servicios_blueprint.route('/listar-sesion-personalizada/<id>', methods=['GET'])
 @token_required
-def listar_sesion_personalizada(usuario_token: SocioToken):
+def listar_sesion_personalizada(usuario_token: SocioToken, id: str):
     logger.info(f'Listar ejercicios de sesion personalizada {usuario_token.email}')
-    body = request.get_json()
 
-    info = {
-        'email': usuario_token.email,
-        'id_servicio_producto' : body.get('id_servicio_producto', None),
-    }
-
-    result = ListarSesionPersonalizada(usuario_token, info).execute()
+    if id is not None:
+        info = {
+            'email': usuario_token.email,
+            'id_servicio_producto' : id
+        }
+        result = ListarSesionPersonalizada(usuario_token, info).execute()
     return make_response(jsonify(result), 200)
