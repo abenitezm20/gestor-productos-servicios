@@ -8,6 +8,7 @@ from src.models.deportista import Deportista
 from src.models.fotos import Fotos
 from src.models.servicio_producto import ServicioProducto, ServicioProductoSchema
 from src.models.deporte import Deporte
+from src.models.servicio_producto_deportista import ServicioProductoDeportista
 from src.models.subtipo_servicio_producto import SubtipoServicioProducto
 from src.utils.seguridad_utils import SocioToken
 from src.utils.str_utils import str_none_or_empty
@@ -46,6 +47,8 @@ class ListarProductosServiciosDeportista (BaseCommand):
                     response = []
                     for servicio in servicios:
 
+                        servicio_producto_vendidos: ServicioProductoDeportista = ServicioProductoDeportista.query.filter_by(id_servicio_producto=servicio.id).all()
+
                         deporte: Deporte = Deporte.query.filter_by(id=servicio.id_deporte).first()
 
                         subtipo_servicio_producto: SubtipoServicioProducto = SubtipoServicioProducto.query.filter_by(id=servicio.id_subtipo_servicio_producto).first()
@@ -63,6 +66,7 @@ class ListarProductosServiciosDeportista (BaseCommand):
                             'lugar_entrega_prestacion': servicio.lugar_entrega_prestacion,
                             'pais': servicio.pais,
                             'valor': servicio.valor,
+                            'servicio_producto_vendidos': len(servicio_producto_vendidos),
                             'fotos': []
                         }
 
