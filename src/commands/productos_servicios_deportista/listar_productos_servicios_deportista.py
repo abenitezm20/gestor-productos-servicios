@@ -1,5 +1,6 @@
 import logging
-
+from sqlalchemy import Date, cast
+from datetime import date
 from src.commands.base_command import BaseCommand
 from src.errors.errors import BadRequest
 from src.models.db import db_session
@@ -36,7 +37,7 @@ class ListarProductosServiciosDeportista (BaseCommand):
                 raise BadRequest
             else:
                 logger.info(f"Listando Todos los Productos para: {deportista.email}")
-                servicios: ServicioProducto = session.query(ServicioProducto).all()
+                servicios: ServicioProducto = session.query(ServicioProducto).filter(cast(ServicioProducto.fecha_entrega_prestacion, Date) >= date.today()).all()
 
                 if servicios is None:
                     logger.error("Servicios o Productos No Existen para este socio de negocio")
