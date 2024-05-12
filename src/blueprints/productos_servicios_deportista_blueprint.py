@@ -1,7 +1,7 @@
 import logging
 from flask import Blueprint, jsonify, make_response, request
 from src.utils.seguridad_utils import SocioToken, token_required
-from src.commands.productos_servicios_deportista.listar_productos_servicios_deportista import ListarProductosServiciosDeportista, ListarProductosServiciosDeportistaFiltro
+from src.commands.productos_servicios_deportista.listar_productos_servicios_deportista import ListarProductosServiciosDeportista, ListarProductosServiciosDeportistaFiltro, ListarProductosServiciosDeportistaID
 from src.commands.productos_servicios_deportista.adquirir_productos_servicios_deportistas import AdquirirProductosServiciosDeportista
 
 logger = logging.getLogger(__name__)
@@ -50,4 +50,18 @@ def listar_productos_servicios_filtro(usuario_token: SocioToken, accion: str):
             'accion': accion,
         }
         result = ListarProductosServiciosDeportistaFiltro(usuario_token, info).execute()
+    return make_response(jsonify(result), 200)
+
+
+#Esta accion se utiliza para entregar los detalles por un id indicado
+@productos_servicios_deportista_blueprint.route('/listarID/<id>', methods=['GET'])
+@token_required
+def listar_productos_servicios_por_id(usuario_token: SocioToken, id: str):
+    logger.info(f'Listar productos por ID para {usuario_token.email}')
+    if id is not None:
+        info = {
+            'email': usuario_token.email,
+            'id': id,
+        }
+        result = ListarProductosServiciosDeportistaID(usuario_token, info).execute()
     return make_response(jsonify(result), 200)
