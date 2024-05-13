@@ -119,7 +119,7 @@ class TestProductosServiciosDeportistas():
                     "ciudad": fake.city(),
                     "lugar_entrega_prestacion": fake.city(),
                     "cantidad_disponible": fake.random_int(min=2, max=10),
-                    "fecha_entrega_prestacion": "2024-05-01T12:00:0",
+                    "fecha_entrega_prestacion": "2024-07-01T12:00:0",
                     "valor": fake.random_int(min=10000, max=1000000)
                 }
                 print(info_producto)
