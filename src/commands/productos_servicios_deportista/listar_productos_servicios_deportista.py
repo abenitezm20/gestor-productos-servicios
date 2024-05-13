@@ -188,6 +188,7 @@ class ListarProductosServiciosDeportistaFiltro (BaseCommand):
                     queryFilter = """SELECT sp.cantidad_disponible, sp.ciudad, sp.descripcion, sp.fecha_entrega_prestacion, sp.id, d.nombre as deporte, sp.id_socio_negocio, ssp.nombre as subtipo, ssp.tipo as tipo, sp.lugar_entrega_prestacion, sp.pais, sp.valor
                                     FROM servicio_producto sp, subtipo_servicio_producto ssp, deporte d  
                                     WHERE sp.id_subtipo_servicio_producto  = ssp.id
+                                    and sp.fecha_entrega_prestacion >= '""" + str(date.today()) + """'
                                     and sp.id_deporte = d.id"""
                     flagProducto = False
                     flagServicio = False
