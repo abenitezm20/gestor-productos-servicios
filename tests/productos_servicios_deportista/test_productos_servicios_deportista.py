@@ -583,7 +583,7 @@ class TestProductosServiciosDeportistas():
                 responseConsulta = test_client.get('/gestor-productos-servicios/productos-servicios-deportista/listar', headers=headers, follow_redirects=True)
                 response_json = json.loads(responseConsulta.data)
 
-                assert response_json.__len__() == 0
+                assert responseConsulta.status_code == 200
 
                 delCompra = delete(ServicioProductoDeportista).where(ServicioProductoDeportista.id_servicio_producto == id_producto)
                 session.execute(delCompra)

@@ -196,6 +196,8 @@ class ListarProductosServiciosDeportistaFiltro (BaseCommand):
                     flagAtletismo = False
                     flagCiclismo = False
                     servicio_producto_comprados = 0
+                    flagSelecionoServiciosPropios = False
+                    flagTieneServiciosPropios = False
                     for filtro in self.filtros:
                         if filtro == "producto":
                             if flagServicio == False:
@@ -218,6 +220,7 @@ class ListarProductosServiciosDeportistaFiltro (BaseCommand):
                             flagAtletismo = True
                             queryFilter = queryFilter + " and d.nombre = 'Atletismo'"
                         elif filtro == "propios":
+                            flagSelecionoServiciosPropios = True
                             queryPropios = """SELECT spd.id_servicio_producto
                                 FROM servicio_producto sp, subtipo_servicio_producto ssp, deporte d, servicio_producto_deportista spd  
                                 WHERE sp.id_subtipo_servicio_producto  = ssp.id
@@ -226,17 +229,18 @@ class ListarProductosServiciosDeportistaFiltro (BaseCommand):
                                 and ssp.tipo IN ('servicio','producto')
                                 and spd.id_deportista = '""" + str(deportista.id) + """'
                                 group by spd.id_servicio_producto"""
-                            #print ("queryPropios: ", queryPropios)
+                            print ("queryPropios: ", queryPropios)
                             sqlQueryPropios = text(queryPropios)
                             serviciosPropios = session.execute(sqlQueryPropios)
-                            if serviciosPropios is not None:
-                                queryFilter = queryFilter + " and sp.id IN ("
-                                primerregistro = False     
-                                for servicio in serviciosPropios:
-                                    if primerregistro == True:
-                                        queryFilter = queryFilter + ","
-                                    queryFilter = queryFilter + "'" + str(servicio.id_servicio_producto) + "'"
-                                    primerregistro = True
+                            primerregistro = True     
+                            for servicio in serviciosPropios:
+                                flagTieneServiciosPropios = True
+                                if primerregistro == True:
+                                    queryFilter = queryFilter + " and sp.id IN (" + "'" + str(servicio.id_servicio_producto) + "'"
+                                elif primerregistro == False:
+                                    queryFilter = queryFilter + "," + "'" + str(servicio.id_servicio_producto) + "'"
+                                primerregistro = False
+                            if primerregistro == False:
                                 queryFilter = queryFilter + ")"
 
                     if flagAmbos == False:
@@ -245,53 +249,56 @@ class ListarProductosServiciosDeportistaFiltro (BaseCommand):
                         elif flagServicio == True:
                             queryFilter = queryFilter + " and ssp.tipo = 'servicio'"
 
-                    #print ("Query: ", queryFilter)
-
-                    sqlQuery = text(queryFilter)
-                    servicios = session.execute(sqlQuery)
-
-                    if servicios is None:
-                        logger.error("Servicios o Productos No Existen para este socio de negocio")
-                        raise BadRequest
+                    print ("Query: ", queryFilter)
+                    
+                    if flagSelecionoServiciosPropios == True and flagTieneServiciosPropios == False:
+                        return []
                     else:
-                        response = []
-                        for servicio in servicios:
-                            queryComprados = """SELECT count(1) as cantidad_comprada
-                                    FROM servicio_producto_deportista spd  
-                                    WHERE spd.id_deportista = '""" + str(deportista.id) + """'
-                                    AND spd.id_servicio_producto = '""" + str(servicio.id) + """'"""
-                            sqlQueryComprados = text(queryComprados)
-                            servicio_producto_comprados = session.execute(sqlQueryComprados).fetchone().cantidad_comprada
-                            #print("Servicios Comprados: ", str(servicio_producto_comprados))
+                        sqlQuery = text(queryFilter)
+                        servicios = session.execute(sqlQuery)
 
-                            responseServicio = {
-                                'cantidad_disponible': servicio.cantidad_disponible,
-                                'ciudad': servicio.ciudad,
-                                'descripcion': servicio.descripcion,
-                                'fecha_entrega_prestacion': servicio.fecha_entrega_prestacion,
-                                'id': servicio.id,
-                                'deporte': servicio.deporte,
-                                'id_socio_negocio': servicio.id_socio_negocio,
-                                'subtipo_servicio_producto': servicio.subtipo,
-                                'tipo_servicio_producto': servicio.tipo,
-                                'lugar_entrega_prestacion': servicio.lugar_entrega_prestacion,
-                                'pais': servicio.pais,
-                                'valor': servicio.valor,
-                                'servicio_producto_comprados': servicio_producto_comprados,
-                                'fotos': []
-                            }
+                        if servicios is None:
+                            logger.error("Servicios o Productos No Existen para este socio de negocio")
+                            raise BadRequest
+                        else:
+                            response = []
+                            for servicio in servicios:
+                                queryComprados = """SELECT count(1) as cantidad_comprada
+                                        FROM servicio_producto_deportista spd  
+                                        WHERE spd.id_deportista = '""" + str(deportista.id) + """'
+                                        AND spd.id_servicio_producto = '""" + str(servicio.id) + """'"""
+                                sqlQueryComprados = text(queryComprados)
+                                servicio_producto_comprados = session.execute(sqlQueryComprados).fetchone().cantidad_comprada
+                                #print("Servicios Comprados: ", str(servicio_producto_comprados))
 
-                            fotos = Fotos.query.filter(Fotos.id_servicio_producto == servicio.id).all()
-                            if fotos is not None:
-                                for recfoto in fotos:
-                                    responseServicio['fotos'].append({
-                                        'orden': recfoto.orden,
-                                        'foto': recfoto.foto
-                                    })
-                            else:
-                                print("No hay fotos")
-                    
-                            response.append(responseServicio)
-                    
-                        return response
+                                responseServicio = {
+                                    'cantidad_disponible': servicio.cantidad_disponible,
+                                    'ciudad': servicio.ciudad,
+                                    'descripcion': servicio.descripcion,
+                                    'fecha_entrega_prestacion': servicio.fecha_entrega_prestacion,
+                                    'id': servicio.id,
+                                    'deporte': servicio.deporte,
+                                    'id_socio_negocio': servicio.id_socio_negocio,
+                                    'subtipo_servicio_producto': servicio.subtipo,
+                                    'tipo_servicio_producto': servicio.tipo,
+                                    'lugar_entrega_prestacion': servicio.lugar_entrega_prestacion,
+                                    'pais': servicio.pais,
+                                    'valor': servicio.valor,
+                                    'servicio_producto_comprados': servicio_producto_comprados,
+                                    'fotos': []
+                                }
+
+                                fotos = Fotos.query.filter(Fotos.id_servicio_producto == servicio.id).all()
+                                if fotos is not None:
+                                    for recfoto in fotos:
+                                        responseServicio['fotos'].append({
+                                            'orden': recfoto.orden,
+                                            'foto': recfoto.foto
+                                        })
+                                else:
+                                    print("No hay fotos")
+                        
+                                response.append(responseServicio)
+                        
+                            return response
 
