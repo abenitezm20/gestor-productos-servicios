@@ -113,7 +113,7 @@ class TestProductosServiciosDeportistas():
                 info_producto = {
                     "deporte": deporte_nombre,
                     "tipo": fake.random_element(elements=('producto', 'servicio')),
-                    "descripcion": fake.text(),
+                    "descripcion": fake.word(),
                     "subtipo": fake.word(),
                     "pais": fake.country(),
                     "ciudad": fake.city(),
@@ -281,7 +281,7 @@ class TestProductosServiciosDeportistas():
                 info_producto = {
                     "deporte": deporte_nombre,
                     "tipo": fake.random_element(elements=('producto', 'servicio')),
-                    "descripcion": fake.text(),
+                    "descripcion": fake.word(),
                     "subtipo": fake.word(),
                     "pais": fake.country(),
                     "ciudad": fake.city(),
@@ -406,7 +406,7 @@ class TestProductosServiciosDeportistas():
                     "email": socio_random.email,
                     "deporte": deporte_random.nombre,
                     "tipo": fake.random_element(elements=('producto', 'servicio')),
-                    "descripcion": fake.text(),
+                    "descripcion": fake.word(),
                     "subtipo": fake.word(),
                     "pais": fake.country(),
                     "ciudad": fake.city(),
@@ -471,4 +471,129 @@ class TestProductosServiciosDeportistas():
 
                 session.delete(deportista_random)
                 session.commit()
-                
+
+
+    @patch('requests.post')
+    def test_listar_productos_servicios_caducados(self, mock_post, setup_data: SocioNegocio):
+        with db_session() as session:
+            with app.test_client() as test_client:
+
+                # Crear Socio de Negocio
+                socio = {
+                    'nombre':fake.name(),
+                    'tipo_identificacion':fake.random_element(elements=(
+                        tipo_identificacion.value for tipo_identificacion in TipoIdentificacionSocioEnum)),
+                    'numero_identificacion':fake.random_int(min=1000000, max=999999999),
+                    'email':fake.email(),
+                    'contrasena':fake.password()
+                }        
+                socio_random: SocioNegocio = SocioNegocio(**socio)
+                session.add(socio_random)
+                session.commit()
+                socio_email = socio_random.email
+                socio_id= socio_random.id
+
+                mock_response = MagicMock()
+                mock_response.status_code = 200
+                mock_response.json.return_value = {
+                    'token_valido': True, 
+                    'email': socio_random.email,
+                    'tipo_usuario': 'socio_negocio'
+                    }
+                mock_post.return_value = mock_response
+
+                headers = {'Authorization': 'Bearer 123'}
+
+                #Crear Deporte
+                info_deporte = {
+                    'nombre': fake.name(),
+                }
+                deporte_random = Deporte(**info_deporte)
+                session.add(deporte_random)
+                session.commit()
+                deporte_nombre = deporte_random.nombre
+
+                #Se crea el producto
+                info_producto = {
+                    "deporte": deporte_nombre,
+                    "tipo": fake.random_element(elements=('producto', 'servicio')),
+                    "descripcion": fake.word(),
+                    "subtipo": fake.word(),
+                    "pais": fake.country(),
+                    "ciudad": fake.city(),
+                    "lugar_entrega_prestacion": fake.city(),
+                    "cantidad_disponible": fake.random_int(min=2, max=10),
+                    "fecha_entrega_prestacion": "2024-05-01T12:00:0",
+                    "valor": fake.random_int(min=10000, max=1000000)
+                }
+                print(info_producto)
+                response = test_client.post('/gestor-productos-servicios/productos-servicios/agregar', headers=headers, json=info_producto, follow_redirects=True)
+                response_json = json.loads(response.data)
+                id_producto = response_json['id_servicio_producto']
+
+                # Crear Deportista
+                info_deportista = {
+                    'nombre': fake.name(),
+                    'apellido': fake.name(),
+                    'tipo_identificacion': fake.random_element(elements=(
+                        tipo_identificacion.value for tipo_identificacion in TipoIdentificacionEnum)),
+                    'numero_identificacion': fake.random_int(min=1000000, max=999999999),
+                    'email': fake.email(),
+                    'genero': fake.random_element(elements=(genero.value for genero in GeneroEnum)),
+                    'edad': fake.random_int(min=18, max=100),
+                    'peso': fake.pyfloat(3, 1, positive=True),
+                    'altura': fake.random_int(min=140, max=200),
+                    'pais_nacimiento': fake.country(),
+                    'ciudad_nacimiento': fake.city(),
+                    'pais_residencia': fake.country(),
+                    'ciudad_residencia': fake.city(),
+                    'antiguedad_residencia': fake.random_int(min=0, max=10),
+                    'contrasena': fake.password(),
+                    'deportes' : [ {"atletismo": 1}, {"ciclismo": 0}]
+                }
+                deportista_random = Deportista(**info_deportista)
+                session.add(deportista_random)
+                session.commit()
+                deportista_email = deportista_random.email
+
+                mock_response = MagicMock()
+                mock_response.status_code = 200
+                mock_response.json.return_value = {
+                    'token_valido': True, 
+                    'email': deportista_random.email,
+                    'tipo_usuario': 'deportista'
+                    }
+                mock_post.return_value = mock_response
+                headers = {'Authorization': 'Bearer 123'}
+
+                #se compra el producto
+                comprar_producto = {
+                    "id_servicio_producto": id_producto,
+                    "fecha_servicio": "2024-05-01T12:00:0",
+                    "direccion_servicio": fake.city(),
+                    "valor": fake.random_int(min=10000, max=1000000),
+                    "telefono": fake.random_int(min=1000000, max=999999999),
+                    "metodo_pago": fake.random_element(elements=('tarjeta', 'efectivo')),
+                    "estado_entrega": fake.random_element(elements=('entregado', 'pendiente', 'cancelado'))
+                }
+
+                response = test_client.post('/gestor-productos-servicios/productos-servicios-deportista/comprar', headers=headers, json=comprar_producto, follow_redirects=True)
+
+                #Se hace la consulta de los productos
+                responseConsulta = test_client.get('/gestor-productos-servicios/productos-servicios-deportista/listar', headers=headers, follow_redirects=True)
+                response_json = json.loads(responseConsulta.data)
+
+                assert response_json.__len__() == 0
+
+                delCompra = delete(ServicioProductoDeportista).where(ServicioProductoDeportista.id_servicio_producto == id_producto)
+                session.execute(delCompra)
+                session.commit()
+
+                delServicioProducto = delete(ServicioProducto).where(ServicioProducto.id == id_producto)
+                session.execute(delServicioProducto)
+                session.commit()
+
+                session.delete(deporte_random)
+                session.delete(deportista_random)
+                session.delete(socio_random)
+                session.commit()

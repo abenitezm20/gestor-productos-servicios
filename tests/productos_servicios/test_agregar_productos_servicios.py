@@ -360,7 +360,7 @@ class TestProductosServicios():
                     "email": socio_random.email,
                     "deporte": deporte_random.nombre,
                     "tipo": fake.random_element(elements=('producto', 'servicio')),
-                    "descripcion": fake.text(),
+                    "descripcion": fake.word(),
                     "subtipo": fake.word(),
                     "pais": fake.country(),
                     "ciudad": fake.city(),
