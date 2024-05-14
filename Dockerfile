@@ -20,7 +20,7 @@ ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_RUN_PORT=3006
 
 # Variables de ambiente Gunicorn
-ENV GUNICORN_NUM_WORKERS=10
+ENV GUNICORN_NUM_WORKERS=5
 ENV GUNICORN_PORT=3006
 
 # Ejecución de la aplicación con Gunicorn

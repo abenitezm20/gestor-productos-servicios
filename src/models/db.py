@@ -10,8 +10,14 @@ db_host = os.getenv('DB_HOST', 'localhost')
 db_port = os.getenv('DB_PORT', '5432')
 db_name = os.getenv('DB_NAME', 'sport_app_db')
 
-engine = create_engine(
-    f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
+#engine = create_engine(
+#    f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
+connect_string = f"postgresql+psycopg2://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+engine = create_engine(connect_string,
+                       pool_size=5,
+                       max_overflow=2,
+                       pool_recycle=300,
+                       pool_pre_ping=True)
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))
