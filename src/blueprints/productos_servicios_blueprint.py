@@ -2,7 +2,7 @@ import logging
 from flask import Blueprint, jsonify, make_response, request
 from src.utils.seguridad_utils import SocioToken, token_required
 from src.commands.productos_servicios.agregar_productos_servicios import AgregarProductosServicios
-from src.commands.productos_servicios.listar_productos_servicios import ListarProductosServicios, ListarProductosServiciosFiltro, ListarProductosServiciosID
+from src.commands.productos_servicios.listar_productos_servicios import ListarProductosServicios, ListarProductosServiciosFiltro, ListarProductosServiciosID, ListarCompradores
 from src.commands.productos_servicios.agregar_sesion_personalizada import AgregarsesionPersonalizada
 from src.commands.productos_servicios.listar_sesion_personalizada import ListarSesionPersonalizada
 
@@ -102,4 +102,18 @@ def listar_sesion_personalizada(usuario_token: SocioToken, id: str):
             'id_servicio_producto' : id
         }
         result = ListarSesionPersonalizada(usuario_token, info).execute()
+    return make_response(jsonify(result), 200)
+
+
+@productos_servicios_blueprint.route('/listar-compradores/<id>', methods=['GET'])
+@token_required
+def listar_compradores_servicios(usuario_token: SocioToken, id: str):
+    logger.info(f'Listar compradores de un servicio o producto {usuario_token.email}')
+
+    if id is not None:
+        info = {
+            'email': usuario_token.email,
+            'id_servicio_producto' : id
+        }
+        result = ListarCompradores(usuario_token, info).execute()
     return make_response(jsonify(result), 200)

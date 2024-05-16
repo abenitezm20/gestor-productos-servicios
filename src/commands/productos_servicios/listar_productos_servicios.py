@@ -3,9 +3,11 @@ import logging
 from src.commands.base_command import BaseCommand
 from src.errors.errors import BadRequest
 from src.models.db import db_session
+from src.models.deportista import Deportista
 from src.models.fotos import Fotos
 from src.models.servicio_producto import ServicioProducto, ServicioProductoSchema
 from src.models.deporte import Deporte
+from src.models.servicio_producto_deportista import ServicioProductoDeportista
 from src.models.socio_negocio import SocioNegocio
 from src.models.subtipo_servicio_producto import SubtipoServicioProducto
 from src.utils.seguridad_utils import SocioToken
@@ -256,3 +258,54 @@ class ListarProductosServiciosID (BaseCommand):
                     response.append(responseServicio)
             
                 return response
+            
+
+            
+class ListarCompradores (BaseCommand):
+    def __init__(self, usuario_token: SocioToken, info: dict):
+        logger.info(
+            'Listar Compradores por ID especifico')
+
+        self.usuario_token: SocioToken = usuario_token
+        self.info = info
+
+        if str_none_or_empty(info.get('email')):
+            logger.error("email no puede ser vacio o nulo")
+            raise BadRequest
+
+
+    def execute(self):
+        with db_session() as session:
+            #socio_negocio: SocioNegocio = SocioNegocio.query.filter_by(email=self.usuario_token.email).first()
+            socio_negocio = session.query(SocioNegocio).filter(SocioNegocio.email == self.usuario_token.email).first()
+        
+            if socio_negocio is None:
+                logger.error("Socio de Negocio No Existe")
+                raise BadRequest
+            else:
+                logger.info(f"Listando Productos de: {socio_negocio.email}")
+                logger.info(f"El servicio a buscar es: {self.info.get('id_servicio_producto')}")
+                servicios: ServicioProductoDeportista = session.query(ServicioProductoDeportista).filter(ServicioProductoDeportista.id_servicio_producto == self.info.get('id_servicio_producto')).all()
+
+                if servicios is None:
+                    logger.error("Servicios o Productos No Existen para este socio de negocio")
+                    raise BadRequest
+                else:
+                    response = []
+                    for servicio in servicios:
+
+                        deportista: Deportista = session.query(Deportista).filter(Deportista.id == servicio.id_deportista).first()
+
+                        responseServicio = {
+                            'deportista_nombre': deportista.nombre+' '+deportista.apellido,
+                            'deportista_numero_identificacion': deportista.numero_identificacion,
+                            'servicio_producto_deportista_direccion_servicio': servicio.direccion_servicio,
+                            'servicio_producto_deportista_telefono': servicio.telefono,
+                            'servicio_producto_deportista_metodo_pago': servicio.metodo_pago,
+                            'servicio_producto_deportista_estado_entrega': servicio.estado_entrega,
+                            'servicio_producto_deportista_fecha_servicio': servicio.fecha_servicio,
+                        }
+                
+                        response.append(responseServicio)
+                
+                    return response
