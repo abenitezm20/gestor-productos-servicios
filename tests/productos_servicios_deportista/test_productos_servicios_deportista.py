@@ -652,7 +652,7 @@ class TestProductosServiciosDeportistas():
                     "fecha_entrega_prestacion": "2024-05-01T12:00:0",
                     "valor": fake.random_int(min=10000, max=1000000)
                 }
-                print(info_producto)
+                #print(info_producto)
                 response = test_client.post('/gestor-productos-servicios/productos-servicios/agregar', headers=headers, json=info_producto, follow_redirects=True)
                 response_json = json.loads(response.data)
                 id_producto = response_json['id_servicio_producto']
