@@ -31,55 +31,61 @@ class ListarProductosServicios (BaseCommand):
 
 
     def execute(self):
-        socio_negocio: SocioNegocio = SocioNegocio.query.filter_by(email=self.usuario_token.email).first()
+        with db_session() as session:
+            #socio_negocio: SocioNegocio = SocioNegocio.query.filter_by(email=self.usuario_token.email).first()
+            socio_negocio: SocioNegocio = session.query(SocioNegocio).filter_by(email=self.usuario_token.email).first()
     
-        if socio_negocio is None:
-            logger.error("Socio de Negocio No Existe")
-            raise BadRequest
-        else:
-            logger.info(f"Listando Productos de: {socio_negocio.email}")
-            servicios: ServicioProducto = ServicioProducto.query.filter_by(id_socio_negocio=socio_negocio.id).all()
-
-            if servicios is None:
-                logger.error("Servicios o Productos No Existen para este socio de negocio")
+            if socio_negocio is None:
+                logger.error("Socio de Negocio No Existe")
                 raise BadRequest
             else:
-                response = []
-                for servicio in servicios:
+                logger.info(f"Listando Productos de: {socio_negocio.email}")
+                #servicios: ServicioProducto = ServicioProducto.query.filter_by(id_socio_negocio=socio_negocio.id).all()
+                servicios = session.query(ServicioProducto).filter(ServicioProducto.id_socio_negocio==socio_negocio.id).all()
 
-                    deporte: Deporte = Deporte.query.filter_by(id=servicio.id_deporte).first()
+                if servicios is None:
+                    logger.error("Servicios o Productos No Existen para este socio de negocio")
+                    raise BadRequest
+                else:
+                    response = []
+                    for servicio in servicios:
 
-                    subtipo_servicio_producto: SubtipoServicioProducto = SubtipoServicioProducto.query.filter_by(id=servicio.id_subtipo_servicio_producto).first()
+                        #deporte: Deporte = Deporte.query.filter_by(id=servicio.id_deporte).first()
+                        deporte = session.query(Deporte).filter(Deporte.id == servicio.id_deporte).first()
 
-                    responseServicio = {
-                        'cantidad_disponible': servicio.cantidad_disponible,
-                        'ciudad': servicio.ciudad,
-                        'descripcion': servicio.descripcion,
-                        'fecha_entrega_prestacion': servicio.fecha_entrega_prestacion,
-                        'id': servicio.id,
-                        'deporte': deporte.nombre,
-                        'id_socio_negocio': servicio.id_socio_negocio,
-                        'subtipo_servicio_producto': subtipo_servicio_producto.nombre,
-                        'tipo_servicio_producto': subtipo_servicio_producto.tipo,
-                        'lugar_entrega_prestacion': servicio.lugar_entrega_prestacion,
-                        'pais': servicio.pais,
-                        'valor': servicio.valor,
-                        'fotos': []
-                    }
+                        #subtipo_servicio_producto: SubtipoServicioProducto = SubtipoServicioProducto.query.filter_by(id=servicio.id_subtipo_servicio_producto).first()
+                        subtipo_servicio_producto = session.query(SubtipoServicioProducto).filter(SubtipoServicioProducto.id == servicio.id_subtipo_servicio_producto).first()
 
-                    fotos = Fotos.query.filter(Fotos.id_servicio_producto == servicio.id).all()
-                    if fotos is not None:
-                        for recfoto in fotos:
-                            responseServicio['fotos'].append({
-                                'orden': recfoto.orden,
-                                'foto': recfoto.foto
-                            })
-                    else:
-                        print("No hay fotos")
-            
-                    response.append(responseServicio)
-            
-                return response
+                        responseServicio = {
+                            'cantidad_disponible': servicio.cantidad_disponible,
+                            'ciudad': servicio.ciudad,
+                            'descripcion': servicio.descripcion,
+                            'fecha_entrega_prestacion': servicio.fecha_entrega_prestacion,
+                            'id': servicio.id,
+                            'deporte': deporte.nombre,
+                            'id_socio_negocio': servicio.id_socio_negocio,
+                            'subtipo_servicio_producto': subtipo_servicio_producto.nombre,
+                            'tipo_servicio_producto': subtipo_servicio_producto.tipo,
+                            'lugar_entrega_prestacion': servicio.lugar_entrega_prestacion,
+                            'pais': servicio.pais,
+                            'valor': servicio.valor,
+                            'fotos': []
+                        }
+
+                        #fotos = Fotos.query.filter(Fotos.id_servicio_producto == servicio.id).all()
+                        fotos = session.query(Fotos).filter(Fotos.id_servicio_producto == servicio.id).all()
+                        if fotos is not None:
+                            for recfoto in fotos:
+                                responseServicio['fotos'].append({
+                                    'orden': recfoto.orden,
+                                    'foto': recfoto.foto
+                                })
+                        else:
+                            print("No hay fotos")
+                
+                        response.append(responseServicio)
+                
+                    return response
 
 
 class ListarProductosServiciosFiltro (BaseCommand):
@@ -102,7 +108,8 @@ class ListarProductosServiciosFiltro (BaseCommand):
 
     def execute(self):
         with db_session() as session:
-            socio_negocio: SocioNegocio = SocioNegocio.query.filter_by(email=self.usuario_token.email).first()
+            #socio_negocio: SocioNegocio = SocioNegocio.query.filter_by(email=self.usuario_token.email).first()
+            socio_negocio: SocioNegocio = session.query(SocioNegocio).filter_by(email=self.usuario_token.email).first()
         
             if socio_negocio is None:
                 logger.error("Socio de Negocio No Existe")
@@ -114,7 +121,8 @@ class ListarProductosServiciosFiltro (BaseCommand):
                 if self.filtros.__len__() > 0:
 
                     #Se genera filtro base para la consulta
-                    queryFilter = """SELECT sp.cantidad_disponible, sp.ciudad, sp.descripcion, sp.fecha_entrega_prestacion, sp.id, d.nombre as deporte, sp.id_socio_negocio, ssp.nombre as subtipo, ssp.tipo as tipo, sp.lugar_entrega_prestacion, sp.pais, sp.valor
+                    queryFilter = """SELECT sp.cantidad_disponible, sp.ciudad, sp.descripcion, sp.fecha_entrega_prestacion, sp.id, d.nombre as deporte, sp.id_socio_negocio, ssp.nombre as subtipo, ssp.tipo as tipo, sp.lugar_entrega_prestacion, sp.pais, sp.valor,
+                                    (select count(1) as vendidos from servicio_producto_deportista spd where spd.id_servicio_producto = sp.id)
                                     FROM servicio_producto sp, subtipo_servicio_producto ssp, deporte d  
                                     WHERE sp.id_socio_negocio = '""" + str(socio_negocio.id) + """'
                                     and sp.id_subtipo_servicio_producto  = ssp.id
@@ -123,7 +131,8 @@ class ListarProductosServiciosFiltro (BaseCommand):
                     flagServicio = False
                     flagAmbos = False
                     flagAtletismo = False
-                    flagCiclismo = False 
+                    flagCiclismo = False
+                    flagVendidos = False 
                     for filtro in self.filtros:
                         if filtro == "producto":
                             if flagServicio == False:
@@ -145,6 +154,9 @@ class ListarProductosServiciosFiltro (BaseCommand):
                         elif filtro == "Atletismo":
                             flagAtletismo = True
                             queryFilter = queryFilter + " and d.nombre = 'Atletismo'"
+                        elif filtro == "vendidos":
+                            flagVendidos = True
+                            queryFilter = queryFilter + " and (select count(1) as vendidos from servicio_producto_deportista spd where spd.id_servicio_producto = sp.id) > 0"
 
                     if flagAmbos == False:
                         if flagProducto == True:
@@ -152,7 +164,7 @@ class ListarProductosServiciosFiltro (BaseCommand):
                         elif flagServicio == True:
                             queryFilter = queryFilter + " and ssp.tipo = 'servicio'"
 
-                    #print ("Query: ", queryFilter)
+                    print ("Query: ", queryFilter)
 
                     sqlQuery = text(queryFilter)
                     servicios = session.execute(sqlQuery)
@@ -177,10 +189,12 @@ class ListarProductosServiciosFiltro (BaseCommand):
                                 'lugar_entrega_prestacion': servicio.lugar_entrega_prestacion,
                                 'pais': servicio.pais,
                                 'valor': servicio.valor,
+                                'vendidos': servicio.vendidos,
                                 'fotos': []
                             }
 
-                            fotos = Fotos.query.filter(Fotos.id_servicio_producto == servicio.id).all()
+                            #fotos = Fotos.query.filter(Fotos.id_servicio_producto == servicio.id).all()
+                            fotos = session.query(Fotos).filter(Fotos.id_servicio_producto == servicio.id).all()
                             if fotos is not None:
                                 for recfoto in fotos:
                                     responseServicio['fotos'].append({
@@ -209,55 +223,61 @@ class ListarProductosServiciosID (BaseCommand):
 
 
     def execute(self):
-        socio_negocio: SocioNegocio = SocioNegocio.query.filter_by(email=self.usuario_token.email).first()
-    
-        if socio_negocio is None:
-            logger.error("Socio de Negocio No Existe")
-            raise BadRequest
-        else:
-            logger.info(f"Listando Productos de: {socio_negocio.email}")
-            servicios: ServicioProducto = ServicioProducto.query.filter_by(id=self.info.get('id')).all()
+        with db_session() as session:
+            #socio_negocio: SocioNegocio = SocioNegocio.query.filter_by(email=self.usuario_token.email).first()
+            socio_negocio: SocioNegocio = session.query(SocioNegocio).filter_by(email=self.usuario_token.email).first()
 
-            if servicios is None:
-                logger.error("Servicios o Productos No Existen para este socio de negocio")
+            if socio_negocio is None:
+                logger.error("Socio de Negocio No Existe")
                 raise BadRequest
             else:
-                response = []
-                for servicio in servicios:
+                logger.info(f"Listando Productos de: {socio_negocio.email}")
+                #servicios: ServicioProducto = ServicioProducto.query.filter_by(id=self.info.get('id')).all()
+                servicios = session.query(ServicioProducto).filter(ServicioProducto.id == self.info.get('id')).all()
 
-                    deporte: Deporte = Deporte.query.filter_by(id=servicio.id_deporte).first()
+                if servicios is None:
+                    logger.error("Servicios o Productos No Existen para este socio de negocio")
+                    raise BadRequest
+                else:
+                    response = []
+                    for servicio in servicios:
 
-                    subtipo_servicio_producto: SubtipoServicioProducto = SubtipoServicioProducto.query.filter_by(id=servicio.id_subtipo_servicio_producto).first()
+                        #deporte: Deporte = Deporte.query.filter_by(id=servicio.id_deporte).first()
+                        deporte = session.query(Deporte).filter(Deporte.id == servicio.id_deporte).first()
 
-                    responseServicio = {
-                        'cantidad_disponible': servicio.cantidad_disponible,
-                        'ciudad': servicio.ciudad,
-                        'descripcion': servicio.descripcion,
-                        'fecha_entrega_prestacion': servicio.fecha_entrega_prestacion,
-                        'id': servicio.id,
-                        'deporte': deporte.nombre,
-                        'id_socio_negocio': servicio.id_socio_negocio,
-                        'subtipo_servicio_producto': subtipo_servicio_producto.nombre,
-                        'tipo_servicio_producto': subtipo_servicio_producto.tipo,
-                        'lugar_entrega_prestacion': servicio.lugar_entrega_prestacion,
-                        'pais': servicio.pais,
-                        'valor': servicio.valor,
-                        'fotos': []
-                    }
+                        #subtipo_servicio_producto: SubtipoServicioProducto = SubtipoServicioProducto.query.filter_by(id=servicio.id_subtipo_servicio_producto).first()
+                        subtipo_servicio_producto = session.query(SubtipoServicioProducto).filter(SubtipoServicioProducto.id == servicio.id_subtipo_servicio_producto).first()
 
-                    fotos = Fotos.query.filter(Fotos.id_servicio_producto == servicio.id).all()
-                    if fotos is not None:
-                        for recfoto in fotos:
-                            responseServicio['fotos'].append({
-                                'orden': recfoto.orden,
-                                'foto': recfoto.foto
-                            })
-                    else:
-                        print("No hay fotos")
-            
-                    response.append(responseServicio)
-            
-                return response
+                        responseServicio = {
+                            'cantidad_disponible': servicio.cantidad_disponible,
+                            'ciudad': servicio.ciudad,
+                            'descripcion': servicio.descripcion,
+                            'fecha_entrega_prestacion': servicio.fecha_entrega_prestacion,
+                            'id': servicio.id,
+                            'deporte': deporte.nombre,
+                            'id_socio_negocio': servicio.id_socio_negocio,
+                            'subtipo_servicio_producto': subtipo_servicio_producto.nombre,
+                            'tipo_servicio_producto': subtipo_servicio_producto.tipo,
+                            'lugar_entrega_prestacion': servicio.lugar_entrega_prestacion,
+                            'pais': servicio.pais,
+                            'valor': servicio.valor,
+                            'fotos': []
+                        }
+
+                        #fotos = Fotos.query.filter(Fotos.id_servicio_producto == servicio.id).all()
+                        fotos = session.query(Fotos).filter(Fotos.id_servicio_producto == servicio.id).all()
+                        if fotos is not None:
+                            for recfoto in fotos:
+                                responseServicio['fotos'].append({
+                                    'orden': recfoto.orden,
+                                    'foto': recfoto.foto
+                                })
+                        else:
+                            print("No hay fotos")
+                
+                        response.append(responseServicio)
+                
+                    return response
             
 
             
