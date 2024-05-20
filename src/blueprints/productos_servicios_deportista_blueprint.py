@@ -1,5 +1,6 @@
 import logging
 from flask import Blueprint, jsonify, make_response, request
+from src.commands.productos_servicios_deportista.listar_sesion_personalizada_deportista import ListarSesionPersonalizadaDeportista
 from src.utils.seguridad_utils import SocioToken, token_required
 from src.commands.productos_servicios_deportista.listar_productos_servicios_deportista import ListarProductosServiciosDeportista, ListarProductosServiciosDeportistaFiltro, ListarProductosServiciosDeportistaID
 from src.commands.productos_servicios_deportista.adquirir_productos_servicios_deportistas import AdquirirProductosServiciosDeportista
@@ -64,4 +65,18 @@ def listar_productos_servicios_por_id(usuario_token: SocioToken, id: str):
             'id': id,
         }
         result = ListarProductosServiciosDeportistaID(usuario_token, info).execute()
+    return make_response(jsonify(result), 200)
+
+
+@productos_servicios_deportista_blueprint.route('/listar-sesion-personalizada/<id>', methods=['GET'])
+@token_required
+def listar_sesion_personalizada(usuario_token: SocioToken, id: str):
+    logger.info(f'Listar ejercicios de sesion personalizada {usuario_token.email}')
+
+    if id is not None:
+        info = {
+            'email': usuario_token.email,
+            'id_servicio_producto' : id
+        }
+        result = ListarSesionPersonalizadaDeportista(usuario_token, info).execute()
     return make_response(jsonify(result), 200)
